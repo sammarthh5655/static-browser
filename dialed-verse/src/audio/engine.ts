@@ -192,6 +192,34 @@ class AudioEngine {
     };
   }
 
+  /** Continuous adjustable tone (for "dial it in" previews). */
+  live(freq: number, vol = 0.3, type: Wave = 'sine') {
+    if (!this.ctx) return { set: (_f: number, _v?: number) => {}, stop: () => {} };
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = 0;
+    g.gain.setTargetAtTime(vol, ctx.currentTime, 0.015);
+    o.connect(g).connect(this.game);
+    o.start();
+    let stopped = false;
+    return {
+      set: (f: number, v?: number) => {
+        if (stopped) return;
+        o.frequency.setTargetAtTime(f, ctx.currentTime, 0.01);
+        if (v !== undefined) g.gain.setTargetAtTime(v, ctx.currentTime, 0.01);
+      },
+      stop: () => {
+        if (stopped) return;
+        stopped = true;
+        g.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
+        o.stop(ctx.currentTime + 0.1);
+      },
+    };
+  }
+
   /** Soft piano-ish note on the game bus. */
   note(freq: number, dur = 0.9, delay = 0, vol = 0.18) {
     this.blip(freq, dur, { type: 'triangle', vol, delay, bus: 'game', attack: 0.01 });
