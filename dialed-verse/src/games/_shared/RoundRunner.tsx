@@ -7,7 +7,7 @@ import { burst } from '@/ui/Confetti';
 export interface RoundRunnerProps<T> {
   targets: T[];
   /** How long the stimulus is visible. */
-  memorizeMs: number;
+  memorizeMs: number | ((t: T, i: number) => number);
   /** Short noise mask between stimulus and recall (kills afterimages). */
   maskMs?: number;
   showLabel?: string;
@@ -24,16 +24,17 @@ export default function RoundRunner<T>({ targets, memorizeMs, maskMs = 450, show
   const [info, setInfo] = useState<ReactNode>(null);
   const revealRef = useRef<HTMLDivElement>(null);
 
+  const showMs = typeof memorizeMs === 'function' ? memorizeMs(targets[i], i) : memorizeMs;
   useEffect(() => {
     if (phase === 'show') {
-      const t = setTimeout(() => setPhase(maskMs ? 'mask' : 'input'), memorizeMs);
+      const t = setTimeout(() => setPhase(maskMs ? 'mask' : 'input'), showMs);
       return () => clearTimeout(t);
     }
     if (phase === 'mask') {
       const t = setTimeout(() => setPhase('input'), maskMs);
       return () => clearTimeout(t);
     }
-  }, [phase, memorizeMs, maskMs]);
+  }, [phase, showMs, maskMs]);
 
   const submit = (score: number, inf?: ReactNode) => {
     const s = Math.max(0, Math.min(1, score));
@@ -80,7 +81,7 @@ export default function RoundRunner<T>({ targets, memorizeMs, maskMs = 450, show
               <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.35em] text-[var(--color-muted)]">{showLabel}</div>
               {renderShow(t, i)}
               <div className="mx-auto mt-4 h-1.5 max-w-sm overflow-hidden rounded-full bg-[var(--color-line)]">
-                <div className="h-full origin-left bg-[var(--color-fg)]" style={{ animation: `dv-shrink ${memorizeMs}ms linear forwards` }} />
+                <div className="h-full origin-left bg-[var(--color-fg)]" style={{ animation: `dv-shrink ${showMs}ms linear forwards` }} />
               </div>
               <style>{'@keyframes dv-shrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}'}</style>
             </div>

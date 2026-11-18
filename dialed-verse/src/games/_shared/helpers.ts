@@ -1,7 +1,7 @@
 import type { Difficulty, GameResult } from '@/core/types';
 import { totalFromRounds } from '@/core/scoring';
 
-export const memo = (d: Difficulty, easy: number, normal: number, hard: number) => (d === 'easy' ? easy : d === 'hard' ? hard : normal);
+export const memo = <V,>(d: Difficulty, easy: V, normal: V, hard: V): V => (d === 'easy' ? easy : d === 'hard' ? hard : normal);
 
 export function roundsResult(scores: number[], summary: string, details?: GameResult['details']): GameResult {
   return { score: totalFromRounds(scores), rounds: scores, summary, details };
